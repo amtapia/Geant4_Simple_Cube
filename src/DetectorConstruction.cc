@@ -8,7 +8,7 @@
 G4VPhysicalVolume* DetectorConstruction::Construct() {
     G4NistManager* nist = G4NistManager::Instance();
     G4Material* worldMat = nist->FindOrBuildMaterial("G4_AIR");
-    G4Material* leadMat = nist->FindOrBuildMaterial("G4_lAr");
+    G4Material* argonMat = nist->FindOrBuildMaterial("G4_lAr");
 
     G4Box* worldBox = new G4Box("World", 1*m, 1*m, 1*m);
     G4LogicalVolume* worldLogic = new G4LogicalVolume(
@@ -25,17 +25,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
                                                     false,              // no boolean operation
                                                     0);                 // copy number
 
-    G4Box* cube = new G4Box("LeadCube", 10*cm, 10*cm, 10*cm);
+    G4Box* cube = new G4Box("ArgonCube", 10*cm, 10*cm, 10*cm);
     G4LogicalVolume* cubeLogic = new G4LogicalVolume(
-                                                    cube,        // its solid
-                                                    leadMat,     // its material
-                                                    "LeadCube"); // its name
+                                                    cube,          // its solid
+                                                    argonMat,      // its material
+                                                    "ArgonCube");  // its name
 
     new G4PVPlacement(
                      0,                     // no rotation
                      G4ThreeVector(0,0,0),  // at (0,0,0)
                      cubeLogic,             // its logical volume
-                     "LeadCube",            // its name
+                     "ArgonCube",           // its name
                      worldLogic,            // its mother  volume
                      false,                 // no boolean operation
                      0);                    // copy number
