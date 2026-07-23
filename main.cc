@@ -1,6 +1,6 @@
 #include "G4RunManager.hh"
 #include "G4UImanager.hh"
-#include "QGSP_BERT.hh"
+#include "PhysicsList.hh"
 #include "G4VisExecutive.hh"
 #include "G4UIExecutive.hh"
 #include "ActionInitialization.hh"
@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     G4RunManager* runManager = new G4RunManager();
 
     runManager->SetUserInitialization(new DetectorConstruction());
-    runManager->SetUserInitialization(new QGSP_BERT());
+    runManager->SetUserInitialization(new PhysicsList());
     runManager->SetUserInitialization(new ActionInitialization());
 
     G4VisManager* visManager = new G4VisExecutive();
