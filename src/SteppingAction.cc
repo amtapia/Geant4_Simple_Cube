@@ -9,20 +9,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     auto volume = step->GetPreStepPoint()->GetPhysicalVolume();
     if (!volume || volume->GetName() != "ArgonCube") return;
 
+    G4double edep = step->GetTotalEnergyDeposit();
+    if (edep <= 0.) return;
+
     const G4Track* track = step->GetTrack();
     const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-    G4double edep = step->GetTotalEnergyDeposit();
 
-    // Log every step inside ArgonCube (not just ones with edep > 0) to see
-    // whether nu_e crosses the cube in a single step (biasing not kicking
-    // in) or is being split into shorter forced-collision steps, and
-    // whether any secondaries are being produced at all.
-    G4cout << "[ArgonCube] step: " << track->GetParticleDefinition()->GetParticleName()
-           << " trackID=" << track->GetTrackID()
-           << " Ekin=" << track->GetKineticEnergy() / MeV << " MeV"
-           << " stepLen=" << step->GetStepLength() / cm << " cm"
-           << " edep=" << edep / keV << " keV"
-           << " weight=" << track->GetWeight()
-           << " proc=" << (process ? process->GetProcessName() : "N/A")
-           << G4endl;
+    G4cout << "[ArgonCube] " << track->GetParticleDefinition()->GetParticleName()
+           << " deposited " << edep / keV << " keV (weight " << track->GetWeight()
+           << ") via process " << (process ? process->GetProcessName() : "N/A") << G4endl;
 }

@@ -2,26 +2,40 @@
 #include "G4EmStandardPhysics.hh"
 #include "G4DecayPhysics.hh"
 #include "G4NeutrinoPhysics.hh"
-#include "G4GenericBiasingPhysics.hh"
-#include "G4BiasingProcessInterface.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ProcessManager.hh"
 #include "G4ProcessVector.hh"
-#include <vector>
+
+// NOTE on forced-collision biasing (tried and reverted):
+//
+// The real nu_e weak-interaction cross sections (~1e-44 to 1e-39 cm^2) make
+// an actual interaction in a 20 cm liquid argon cube statistically
+// invisible even across thousands of events. G4BOptrForceCollision
+// (G4GenericBiasingPhysics + G4BOptrForceCollision, attached to the
+// ArgonCube) was tried to force an interaction every event, following the
+// pattern from Geant4's GB02 example.
+//
+// It uncovered what looks like a bug in G4NeutrinoPhysics (new in Geant4
+// 11.2): whichever interaction process actually fires (nuElectron or
+// elNuNucleus) leaves nu_e at exactly Ekin = 0 afterwards, and something in
+// the tracking/biasing bookkeeping then re-queries that process's cross
+// section at that now-zero energy, which falls outside the cross-section
+// table's valid range and raises a fatal G4Exception (had001,
+// G4CrossSectionDataStore::GetIsoCrossSection). This reproduced regardless
+// of which process was forced and regardless of the primary energy (tested
+// 5, 50, 500 MeV) — i.e. it isn't a biasing setup mistake, it would
+// eventually hit any run where one of these processes actually interacts,
+// biased or not.
+//
+// So: this PhysicsList only sets up G4NeutrinoPhysics and confirms (via the
+// diagnostic dump below) that its processes are correctly attached to
+// nu_e. It doesn't try to force or otherwise make an interaction visible.
 
 PhysicsList::PhysicsList() {
     RegisterPhysics(new G4EmStandardPhysics());
     RegisterPhysics(new G4DecayPhysics());
     RegisterPhysics(new G4NeutrinoPhysics());
-
-    // Wrap nu_e processes so a biasing operator (see DetectorConstruction)
-    // can force an interaction inside the ArgonCube: the real weak
-    // interaction cross sections are far too small to see any interaction
-    // in a run of a reasonable number of events otherwise.
-    G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
-    biasingPhysics->Bias("nu_e");
-    RegisterPhysics(biasingPhysics);
 }
 
 void PhysicsList::ConstructProcess() {
@@ -35,41 +49,9 @@ void PhysicsList::ConstructProcess() {
         return;
     }
 
-    // Vacuum oscillation has by far the shortest interaction length of
-    // nu_e's biased processes, so G4BOptrForceCollision always forces it
-    // instead of the actual matter interactions we want to see, and it
-    // carries no energy deposit anyway (SetProcessActivation had no effect
-    // on the forced-collision selection, so it's removed outright).
-    //
-    // elNuNucleus (quasi-elastic CC scattering, nu_e + n -> p + e-) fully
-    // absorbs the nu_e (post-interaction Ekin = 0), which then crashes
-    // G4BOptrForceCollision's internal cross-section bookkeeping (it
-    // re-queries the process's cross section at the now-zero energy,
-    // outside the table's valid range: G4Exception had001). Remove it too
-    // for now, leaving only nuElectron (elastic scattering, nu_e survives
-    // with reduced energy) as the sole process forced collision can pick.
-    //
-    // Collect pointers during iteration and remove them only after the
-    // loop, since RemoveProcess mutates the very G4ProcessVector being
-    // iterated.
     G4ProcessVector* processes = processManager->GetProcessList();
     G4cout << "[PhysicsList] Processes attached to nu_e (" << processes->size() << "):" << G4endl;
-    std::vector<G4VProcess*> processesToRemove;
     for (size_t i = 0; i < processes->size(); ++i) {
-        G4VProcess* proc = (*processes)[i];
-        G4bool isBiased = (dynamic_cast<G4BiasingProcessInterface*>(proc) != nullptr);
-        G4bool isOscillation = (proc->GetProcessName().find("nuVacOscillation") != G4String::npos);
-        G4bool isNucleus = (proc->GetProcessName().find("elNuNucleus") != G4String::npos);
-        if (isOscillation || isNucleus) {
-            processesToRemove.push_back(proc);
-        }
-        G4cout << "  - " << proc->GetProcessName()
-               << (isBiased ? " [biasing-wrapped]" : "")
-               << ((isOscillation || isNucleus) ? " [to be removed]" : "") << G4endl;
-    }
-
-    for (auto* proc : processesToRemove) {
-        processManager->RemoveProcess(proc);
-        G4cout << "[PhysicsList] Removed " << proc->GetProcessName() << " from nu_e" << G4endl;
+        G4cout << "  - " << (*processes)[i]->GetProcessName() << G4endl;
     }
 }
