@@ -2,6 +2,7 @@
 #include "G4EmStandardPhysics.hh"
 #include "G4DecayPhysics.hh"
 #include "G4NeutrinoPhysics.hh"
+#include "G4GenericBiasingPhysics.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ProcessManager.hh"
@@ -11,6 +12,14 @@ PhysicsList::PhysicsList() {
     RegisterPhysics(new G4EmStandardPhysics());
     RegisterPhysics(new G4DecayPhysics());
     RegisterPhysics(new G4NeutrinoPhysics());
+
+    // Wrap nu_e processes so a biasing operator (see DetectorConstruction)
+    // can force an interaction inside the ArgonCube: the real weak
+    // interaction cross sections are far too small to see any interaction
+    // in a run of a reasonable number of events otherwise.
+    G4GenericBiasingPhysics* biasingPhysics = new G4GenericBiasingPhysics();
+    biasingPhysics->Bias("nu_e");
+    RegisterPhysics(biasingPhysics);
 }
 
 void PhysicsList::ConstructProcess() {

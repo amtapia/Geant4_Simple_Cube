@@ -4,6 +4,7 @@
 #include "G4PVPlacement.hh"
 #include "G4NistManager.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4BOptrForceCollision.hh"
 
 G4VPhysicalVolume* DetectorConstruction::Construct() {
     G4NistManager* nist = G4NistManager::Instance();
@@ -40,6 +41,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
                      false,                 // no boolean operation
                      0);                    // copy number
 
+    // Force nu_e to interact inside the ArgonCube: the real cross sections
+    // are so small that interactions would essentially never happen in a
+    // run with a reasonable number of events otherwise. Requires nu_e to be
+    // marked for biasing in PhysicsList (G4GenericBiasingPhysics::Bias).
+    auto forceCollision = new G4BOptrForceCollision("nu_e", "ForceCollisionForNuE");
+    forceCollision->AttachTo(cubeLogic);
 
     return worldPhys;
 }

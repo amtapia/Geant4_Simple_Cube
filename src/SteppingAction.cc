@@ -16,6 +16,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
     const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
 
     G4cout << "[ArgonCube] " << track->GetParticleDefinition()->GetParticleName()
-           << " deposited " << edep / keV << " keV via process "
-           << (process ? process->GetProcessName() : "N/A") << G4endl;
+           << " deposited " << edep / keV << " keV (weight " << track->GetWeight()
+           << ") via process " << (process ? process->GetProcessName() : "N/A") << G4endl;
 }
