@@ -1,4 +1,7 @@
 #!/bin/bash
+if [ -d build ]; then
+    rm -rf build
+fi
 mkdir -p build
 cp init_vis.mac ./build
 cd build
