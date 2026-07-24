@@ -3,6 +3,7 @@
 #include "G4DecayPhysics.hh"
 #include "G4NeutrinoPhysics.hh"
 #include "G4GenericBiasingPhysics.hh"
+#include "G4BiasingProcessInterface.hh"
 #include "G4ParticleTable.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ProcessManager.hh"
@@ -36,6 +37,9 @@ void PhysicsList::ConstructProcess() {
     G4ProcessVector* processes = processManager->GetProcessList();
     G4cout << "[PhysicsList] Processes attached to nu_e (" << processes->size() << "):" << G4endl;
     for (size_t i = 0; i < processes->size(); ++i) {
-        G4cout << "  - " << (*processes)[i]->GetProcessName() << G4endl;
+        G4VProcess* proc = (*processes)[i];
+        G4bool isBiased = (dynamic_cast<G4BiasingProcessInterface*>(proc) != nullptr);
+        G4cout << "  - " << proc->GetProcessName()
+               << (isBiased ? " [biasing-wrapped]" : "") << G4endl;
     }
 }

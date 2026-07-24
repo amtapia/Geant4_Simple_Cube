@@ -5,6 +5,7 @@
 #include "G4NistManager.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4BOptrForceCollision.hh"
+#include "G4VBiasingOperator.hh"
 
 G4VPhysicalVolume* DetectorConstruction::Construct() {
     G4NistManager* nist = G4NistManager::Instance();
@@ -47,6 +48,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
     // marked for biasing in PhysicsList (G4GenericBiasingPhysics::Bias).
     auto forceCollision = new G4BOptrForceCollision("nu_e", "ForceCollisionForNuE");
     forceCollision->AttachTo(cubeLogic);
+    G4cout << "[DetectorConstruction] Biasing operator on ArgonCube: "
+           << (G4VBiasingOperator::GetBiasingOperator(cubeLogic) ? "attached" : "NOT attached")
+           << G4endl;
 
     return worldPhys;
 }
