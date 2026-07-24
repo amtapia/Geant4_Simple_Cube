@@ -7,6 +7,8 @@ class PhysicsList : public G4VModularPhysicsList {
 public:
     PhysicsList();
     virtual ~PhysicsList() = default;
+
+    virtual void ConstructProcess();
 };
 
 #endif
