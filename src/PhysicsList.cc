@@ -34,12 +34,22 @@ void PhysicsList::ConstructProcess() {
         return;
     }
 
+    // Vacuum oscillation has by far the shortest interaction length of
+    // nu_e's biased processes, so G4BOptrForceCollision always forces it
+    // instead of the actual matter interactions (nuElectron / elNuNucleus)
+    // we want to see. Oscillation carries no energy deposit anyway, so
+    // deactivate it to let forced collisions land on a real interaction.
     G4ProcessVector* processes = processManager->GetProcessList();
     G4cout << "[PhysicsList] Processes attached to nu_e (" << processes->size() << "):" << G4endl;
     for (size_t i = 0; i < processes->size(); ++i) {
         G4VProcess* proc = (*processes)[i];
         G4bool isBiased = (dynamic_cast<G4BiasingProcessInterface*>(proc) != nullptr);
+        G4bool isOscillation = (proc->GetProcessName().find("nuVacOscillation") != G4String::npos);
+        if (isOscillation) {
+            processManager->SetProcessActivation(proc, false);
+        }
         G4cout << "  - " << proc->GetProcessName()
-               << (isBiased ? " [biasing-wrapped]" : "") << G4endl;
+               << (isBiased ? " [biasing-wrapped]" : "")
+               << (isOscillation ? " [DEACTIVATED]" : "") << G4endl;
     }
 }
