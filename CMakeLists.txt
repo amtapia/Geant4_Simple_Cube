@@ -9,6 +9,8 @@ add_executable(main main.cc
     src/DetectorConstruction.cc
     src/PrimaryGeneratorAction.cc
     src/ActionInitialization.cc
+    src/PhysicsList.cc
+    src/SteppingAction.cc
 )
 
 target_include_directories(main PUBLIC

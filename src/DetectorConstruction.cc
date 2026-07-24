@@ -40,6 +40,5 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
                      false,                 // no boolean operation
                      0);                    // copy number
 
-
     return worldPhys;
 }
