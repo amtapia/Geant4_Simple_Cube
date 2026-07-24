@@ -37,19 +37,30 @@ void PhysicsList::ConstructProcess() {
     // Vacuum oscillation has by far the shortest interaction length of
     // nu_e's biased processes, so G4BOptrForceCollision always forces it
     // instead of the actual matter interactions (nuElectron / elNuNucleus)
-    // we want to see. Oscillation carries no energy deposit anyway, so
-    // deactivate it to let forced collisions land on a real interaction.
+    // we want to see. Oscillation carries no energy deposit anyway.
+    // Deactivating it (G4ProcessManager::SetProcessActivation) had no
+    // effect on the forced-collision selection, so remove it outright
+    // instead. Collect the pointer during iteration and remove it only
+    // after the loop, since RemoveProcess mutates the very G4ProcessVector
+    // being iterated.
     G4ProcessVector* processes = processManager->GetProcessList();
     G4cout << "[PhysicsList] Processes attached to nu_e (" << processes->size() << "):" << G4endl;
+    G4VProcess* oscillationProcess = nullptr;
     for (size_t i = 0; i < processes->size(); ++i) {
         G4VProcess* proc = (*processes)[i];
         G4bool isBiased = (dynamic_cast<G4BiasingProcessInterface*>(proc) != nullptr);
         G4bool isOscillation = (proc->GetProcessName().find("nuVacOscillation") != G4String::npos);
         if (isOscillation) {
-            processManager->SetProcessActivation(proc, false);
+            oscillationProcess = proc;
         }
         G4cout << "  - " << proc->GetProcessName()
                << (isBiased ? " [biasing-wrapped]" : "")
-               << (isOscillation ? " [DEACTIVATED]" : "") << G4endl;
+               << (isOscillation ? " [to be removed]" : "") << G4endl;
+    }
+
+    if (oscillationProcess) {
+        processManager->RemoveProcess(oscillationProcess);
+        G4cout << "[PhysicsList] Removed " << oscillationProcess->GetProcessName()
+               << " from nu_e" << G4endl;
     }
 }
